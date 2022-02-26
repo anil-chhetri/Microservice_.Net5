@@ -7,33 +7,31 @@ using Play.Catalog.Service.Entities;
 namespace Play.Catalog.Service.Repositories
 {
 
-    public class ItemRepository : IItemRepository
+    public class MongoRepository<T> : IRepository<T> where T : IEntity
     {
-        private readonly string collectionName = "items";
+        private readonly IMongoCollection<T> collections;
 
-        private readonly IMongoCollection<Item> collections;
+        private readonly FilterDefinitionBuilder<T> filterBuilder = Builders<T>.Filter;
 
-        private readonly FilterDefinitionBuilder<Item> filterBuilder = Builders<Item>.Filter;
-
-        public ItemRepository(IMongoDatabase database)
+        public MongoRepository(IMongoDatabase database, string collectionName)
         {
-            collections = database.GetCollection<Item>(collectionName);
+            collections = database.GetCollection<T>(collectionName);
         }
 
-        public async Task<IReadOnlyCollection<Item>> GetAllAsync()
+        public async Task<IReadOnlyCollection<T>> GetAllAsync()
         {
             return await collections.Find(filterBuilder.Empty).ToListAsync();
         }
 
 
-        public async Task<Item> GetAsync(Guid Id)
+        public async Task<T> GetAsync(Guid Id)
         {
             var filter = filterBuilder.Eq(entity => entity.Id, Id);
             return await collections.Find(filter).SingleOrDefaultAsync();
         }
 
 
-        public async Task CreateAsync(Item item)
+        public async Task CreateAsync(T item)
         {
             if (item == null)
             {
@@ -43,7 +41,7 @@ namespace Play.Catalog.Service.Repositories
             await collections.InsertOneAsync(item);
         }
 
-        public async Task UpdateAsync(Item item)
+        public async Task UpdateAsync(T item)
         {
             if (item == null)
             {
@@ -59,5 +57,7 @@ namespace Play.Catalog.Service.Repositories
             var filter = filterBuilder.Eq(entity => entity.Id, Id);
             await collections.DeleteOneAsync(filter);
         }
+
+
     }
 }
