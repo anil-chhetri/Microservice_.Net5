@@ -1,5 +1,3 @@
-using MassTransit;
-using MassTransit.Definition;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -7,16 +5,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Play.Catalog.Service.Entities;
-using Play.Catalog.Service.Settings;
+using Play.Common.MassTransit;
 using Play.Common.MongoDb;
-using Play.Common.Settings;
 
 namespace Play.Catalog.Service
 {
     public class Startup
     {
 
-        private ServiceSettings serviceSettings;
+        // private ServiceSettings serviceSettings;
 
         public Startup(IConfiguration configuration)
         {
@@ -28,21 +25,22 @@ namespace Play.Catalog.Service
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            serviceSettings = Configuration.GetSection(nameof(serviceSettings)).Get<ServiceSettings>();
+            // serviceSettings = Configuration.GetSection(nameof(serviceSettings)).Get<ServiceSettings>();
             services.AddMongo()
-                    .AddMongoRepository<Item>("items");
+                    .AddMongoRepository<Item>("items")
+                    .AddMassTransitWithRabbitmq();
 
-            services.AddMassTransit(x =>
-            {
-                x.UsingRabbitMq((context, configurator) =>
-                {
-                    var rabbitMq = Configuration.GetSection(nameof(RabbitMQSettings)).Get<RabbitMQSettings>();
-                    configurator.Host(rabbitMq.Host);
-                    configurator.ConfigureEndpoints(context, new KebabCaseEndpointNameFormatter(serviceSettings.ServiceName, false));
-                });
-            });
+            // services.AddMassTransit(x =>
+            // {
+            //     x.UsingRabbitMq((context, configurator) =>
+            //     {
+            //         var rabbitMq = Configuration.GetSection(nameof(RabbitMQSettings)).Get<RabbitMQSettings>();
+            //         configurator.Host(rabbitMq.Host);
+            //         configurator.ConfigureEndpoints(context, new KebabCaseEndpointNameFormatter(serviceSettings.ServiceName, false));
+            //     });
+            // });
 
-            services.AddMassTransitHostedService();
+            // services.AddMassTransitHostedService();
 
             services.AddControllers(options =>
             {
