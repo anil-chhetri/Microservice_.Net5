@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using Play.Common.MassTransit;
 using Play.Common.MongoDb;
 using Play.Inventory.Service.Client;
 using Play.Inventory.Service.Entities;
@@ -33,8 +34,13 @@ namespace Play.Inventory.Service
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMongo()
-                    .AddMongoRepository<InventoryItem>("InventoryItems");
+                    .AddMongoRepository<InventoryItem>("InventoryItems")
+                    .AddMongoRepository<CatalogItem>("CatalogItems")
+                    .AddMassTransitWithRabbitmq();
 
+
+
+            //using syncornous method to communicated with other  microservices.
             services.AddHttpClient<CatalogClient>(client =>
             {
                 client.BaseAddress = new Uri("https://localhost:5001");

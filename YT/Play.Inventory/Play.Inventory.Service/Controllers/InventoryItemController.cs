@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using Play.Common.Interface;
 using Play.Inventory.Service.Client;
 using Play.Inventory.Service.Entities;
-using Play.Inventory.Service.Properties;
 
 namespace Play.Inventory.Service.Controllers
 {
@@ -15,31 +14,35 @@ namespace Play.Inventory.Service.Controllers
     public class InventoryItemController : ControllerBase
     {
         private readonly IRepository<InventoryItem> repository;
-        private readonly CatalogClient catalogClient;
+        // private readonly CatalogClient catalogClient;
+        private readonly IRepository<CatalogItem> CatalogRepo;
 
         public InventoryItemController(IRepository<InventoryItem> repository,
+                                       IRepository<CatalogItem> CatalogRepo,
                                        CatalogClient CatalogClient)
         {
+            this.CatalogRepo = CatalogRepo;
             this.repository = repository;
-            this.catalogClient = CatalogClient;
+            // this.catalogClient = CatalogClient;
         }
 
         [HttpGet("{UserId}")]
         public async Task<IActionResult> GetAsync(Guid UserId)
         {
-            // var inventory = (await repository.GetAllAsync(entity => entity.UserId == UserId))
-            //             .Select(item => item.AsDto());
+            var inventory = (await repository.GetAllAsync(entity => entity.UserId == UserId));
+            var ItemsId = inventory.Select(x => x.CatalogItemId);
+            var CatalogItemsEntities = await CatalogRepo.GetAllAsync(item => ItemsId.Contains(item.Id));
 
-            var catalogItem = await catalogClient.GetItemsAsync();
-            var inventory = (await repository.GetAllAsync(entity => entity.UserId == UserId))
+
+            var inventoryDto = inventory
                             .Select(inventoryItem =>
                             {
-                                var item = catalogItem.Single(e => e.Id == inventoryItem.CatalogItemId);
-                                return inventoryItem.AsDto(item.name, item.description);
+                                var item = CatalogItemsEntities.Single(e => e.Id == inventoryItem.CatalogItemId);
+                                return inventoryItem.AsDto(item.Name, item.Description);
                             });
 
 
-            return Ok(inventory);
+            return Ok(inventoryDto);
         }
 
         [HttpPost]
