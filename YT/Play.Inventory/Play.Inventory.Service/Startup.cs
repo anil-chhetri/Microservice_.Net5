@@ -49,7 +49,21 @@ namespace Play.Inventory.Service
                                     .LogWarning($"Delaying for {timespan.TotalSeconds} seconds then making retry {retryAttempt}");
                             }
                         )
-                    )
+                    )  //adding retry to Catalog Client
+            .AddTransientHttpErrorPolicy(builder => builder.Or<TimeoutRejectedException>().CircuitBreakerAsync(
+                3, TimeSpan.FromSeconds(15)
+                , onBreak: (outcome, timespan) =>
+                {
+                    var serviceProvider = services.BuildServiceProvider();
+                    serviceProvider.GetService<ILogger<CatalogClient>>()?
+                                   .LogWarning($"Opening Circuit Breaker for {timespan.TotalSeconds} secocnds.....");
+                }, onReset: () =>
+                {
+                    var serviceProvider = services.BuildServiceProvider();
+                    serviceProvider.GetService<ILogger<CatalogClient>>()?
+                                   .LogWarning($"Closing the circuit.");
+                }
+            ))  //if catalog client gives multiple error rejecting request using Circuit Breaker.
             .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(1));
 
             services.AddControllers(options =>
