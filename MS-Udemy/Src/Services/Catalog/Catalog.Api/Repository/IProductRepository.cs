@@ -1,11 +1,16 @@
-﻿using Catalog.Api.Entities;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Catalog.Api.Entities;
 
 namespace Catalog.Api.Repository
 {
     public interface IProductRepository
     {
+
+
+
+
+
         Task CreateProductAsync(Product product);
         Task<bool> DeleteProductAsync(string id);
         Task<Product> GetProductAsync(string id);

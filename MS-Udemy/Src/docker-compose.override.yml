@@ -1,0 +1,24 @@
+version: '3.4'
+
+services:
+  CatalogDb:
+    container_name: CatalogDb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongoData:/data/db
+
+  catalog.api:
+    container_name: catalog.api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - "DatabaseSettings:ConnectionString=mongodb://CatalogDb:27017" #injecting mongoDb connetion string to appsettings.
+    depends_on:
+      - CatalogDb
+    ports:
+      - "8000:80"
+      - "8001:443"
+    volumes:
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
